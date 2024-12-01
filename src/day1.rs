@@ -7,7 +7,7 @@ fn private_solve_part_1(values: &str) -> String {
     let (list1, list2) = get_lists(values);
     let mut dist = 0;
     for (v1, v2) in list1.into_iter().zip(list2.into_iter()) {
-        dist += (v1 - v2).abs()
+        dist += (v1 - v2).abs();
     }
 
     dist.to_string()
