@@ -13,7 +13,6 @@ fn private_solve_part_1(values: &str) -> String {
 
     safe_count.to_string()
 }
-
 fn private_solve_part_2(values: &str) -> String {
     let levels = parse_values(values);
     let mut safe_count = 0;
@@ -25,6 +24,89 @@ fn private_solve_part_2(values: &str) -> String {
     }
 
     safe_count.to_string()
+}
+
+fn can_be_made_safe(level: &[i32]) -> bool {
+    if level.len() < 2 {
+        return false;
+    }
+
+    let diffs: Vec<i32> = level.windows(2).map(|pair| pair[1] - pair[0]).collect();
+    let mut bad_indices = Vec::new();
+
+    for (i, &diff) in diffs.iter().enumerate() {
+        if !is_valid_difference(diff) {
+            bad_indices.push(i);
+        }
+    }
+
+    // NOTE(hspadim): If there is more than one bad difference, it cannot be fixed
+    if bad_indices.len() > 1 {
+        return false;
+    }
+
+    // NOTE(hspadim): Should not happen since the input is already unsafe
+    if bad_indices.is_empty() {
+        return false;
+    }
+
+    let bad_index = bad_indices[0];
+
+    // NOTE(hspadim): Removing the problematic level and checking if the sequence becomes safe
+    let mut modified_level = level.to_vec();
+    if bad_index == 0 {
+        // NOTE(hspadim): Remove the first level (invalid transition with second level)
+        modified_level.remove(0);
+    } else {
+        // NOTE(hspadim): Remove the level after the bad difference
+        modified_level.remove(bad_index + 1);
+    }
+
+    is_safe(&modified_level)
+}
+
+fn is_valid_difference(diff: i32) -> bool {
+    (1..=3).contains(&diff) || (-3..=-1).contains(&diff)
+}
+
+fn is_safe(level: &[i32]) -> bool {
+    if level.len() < 2 {
+        return false; // A safe report must have at least two levels.
+    }
+
+    let mut is_increasing = None; // None: undetermined, Some(true): increasing, Some(false): decreasing
+
+    for window in level.windows(2) {
+        let diff = window[1] - window[0];
+
+        // Check difference constraints
+        if !is_valid_difference(diff) {
+            return false;
+        }
+
+        // Determine increasing/decreasing direction
+        match is_increasing {
+            None => {
+                if diff > 0 {
+                    is_increasing = Some(true);
+                } else if diff < 0 {
+                    is_increasing = Some(false);
+                }
+            }
+            Some(true) => {
+                if diff <= 0 {
+                    return false; // Expected strictly increasing
+                }
+            }
+            Some(false) => {
+                if diff >= 0 {
+                    return false; // Expected strictly decreasing
+                }
+            }
+        }
+    }
+
+    true
 }
 
 fn _solve_part_1_dummy() -> String {
@@ -53,63 +135,6 @@ fn parse_values(values: &str) -> Vec<Vec<i32>> {
         ans.push(temp)
     }
     ans
-}
-
-fn is_safe(level: &[i32]) -> bool {
-    let len = level.len();
-    if len < 2 {
-        return false;
-    }
-
-    let mut is_increasing = None;
-
-    for window in level.windows(2) {
-        let diff = window[1] - window[0];
-
-        if !((1 <= diff.abs()) && (diff.abs() <= 3)) {
-            return false;
-        }
-
-        match is_increasing {
-            None => {
-                if diff > 0 {
-                    is_increasing = Some(true);
-                } else if diff < 0 {
-                    is_increasing = Some(false);
-                }
-            }
-            Some(true) => {
-                if diff <= 0 {
-                    return false;
-                }
-            }
-            Some(false) => {
-                if diff >= 0 {
-                    return false;
-                }
-            }
-        }
-    }
-
-    true
-}
-
-fn can_be_made_safe(level: &[i32]) -> bool {
-    let len = level.len();
-    if len < 2 {
-        return false;
-    }
-
-    for i in 0..len {
-        let mut modified_level = level.to_vec();
-        modified_level.remove(i);
-
-        if is_safe(&modified_level) {
-            return true;
-        }
-    }
-
-    false
 }
 
 #[cfg(test)]
